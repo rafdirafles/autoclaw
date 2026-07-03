@@ -57,9 +57,14 @@ echo.
 echo [4/4] Setting up API key...
 set /p API_KEY="   Enter your router API key (or press Enter for default 'sk-change-me'): "
 if "%API_KEY%"=="" set "API_KEY=sk-change-me"
+
+REM Save to .env file (local, gitignored)
+echo AUTOCLAW_API_KEY=%API_KEY%> "%~dp0.env"
+echo       .env file created.
+
+REM Also set system env var (for non-router usage)
 setx AUTOCLAW_API_KEY "%API_KEY%" >nul 2>&1
-set "AUTOCLAW_API_KEY=%API_KEY%"
-echo       API key saved to system environment.
+echo       System env var saved.
 
 echo.
 echo ============================================

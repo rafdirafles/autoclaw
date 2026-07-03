@@ -53,7 +53,24 @@ HOST = "localhost"
 PORT = 31000
 
 # API key for router validation (clients send Authorization: Bearer <key>)
-ROUTER_API_KEY = os.environ.get("AUTOCLAW_API_KEY", "sk-change-me")  # Set AUTOCLAW_API_KEY env var in production
+# Try env var first, then .env file, then default
+def _load_api_key():
+    # 1. Environment variable
+    key = os.environ.get("AUTOCLAW_API_KEY")
+    if key:
+        return key
+    # 2. Local .env file (gitignored, for local dev)
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("AUTOCLAW_API_KEY="):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    # 3. Default (must be changed)
+    return "sk-change-me"
+
+ROUTER_API_KEY = _load_api_key()
 
 PROXY_PATH = "/autoclaw-proxy/proxy/autoclaw/chat/completions"
 

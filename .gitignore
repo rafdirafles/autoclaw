@@ -3,6 +3,7 @@ accounts.json
 tokens.txt
 email.txt
 config.json
+.env
 *.pid
 *.log
 service.log
