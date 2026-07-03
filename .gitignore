@@ -1,0 +1,28 @@
+# === SENSITIVE — NEVER COMMIT ===
+accounts.json
+tokens.txt
+email.txt
+config.json
+*.pid
+*.log
+
+# === PYTHON ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
