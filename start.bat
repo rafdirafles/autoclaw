@@ -65,7 +65,20 @@ if "%CHOICE%"=="5" (
     echo.
     set /p REG_COUNT="   How many accounts to register? (default 5): "
     if "%REG_COUNT%"=="" set "REG_COUNT=5"
+    echo.
+    echo    Registering %REG_COUNT% accounts...
+    echo    Make sure email.txt has emails (format: email:password)
+    echo.
     python "%~dp0register.py" --count %REG_COUNT%
+    if errorlevel 1 (
+        echo.
+        echo    [ERROR] Registration failed!
+        echo    Common causes:
+        echo    - cloakbrowser not installed: pip install cloakbrowser
+        echo    - No emails in email.txt
+        echo    - Google password not set in config.json
+        echo.
+    )
     echo.
     pause
     goto MENU
