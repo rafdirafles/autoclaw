@@ -5,6 +5,7 @@ email.txt
 config.json
 *.pid
 *.log
+service.log
 
 # === PYTHON ===
 __pycache__/

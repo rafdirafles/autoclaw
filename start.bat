@@ -30,10 +30,8 @@ set /p CHOICE="   Select: "
 if "%CHOICE%"=="1" (
     echo.
     echo    Starting services in background...
-    set AUTOCLAW_API_KEY=%ROUTER_API_KEY%
-    start /b "" pythonw "%~dp0runner.py" --daemon
-    timeout /t 5 /nobreak >nul
-    python "%~dp0runner.py" --status
+    set "AUTOCLAW_API_KEY=%ROUTER_API_KEY%"
+    python "%~dp0runner.py" --daemon
     echo.
     echo    Dashboard: http://localhost:31001
     echo.
@@ -58,7 +56,7 @@ if "%CHOICE%"=="4" (
     echo.
     echo    Starting in foreground (Ctrl+C to stop)...
     echo.
-    set AUTOCLAW_API_KEY=%ROUTER_API_KEY%
+    set "AUTOCLAW_API_KEY=%ROUTER_API_KEY%"
     python "%~dp0runner.py"
     pause
     goto MENU

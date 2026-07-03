@@ -58,6 +58,7 @@ SERVICES = [
 
 MAX_RESTARTS = 50
 RESTART_DELAY = 3
+SERVICE_LOG = _DIR / "service.log"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -164,9 +165,14 @@ def run_foreground():
                     svc["restarts"] += 1
                     log(f"[START] {svc['name']} (attempt {svc['restarts']})")
 
+                    # Redirect child stdout/stderr to service.log (survives crashes)
+                    log_fh = open(str(SERVICE_LOG), "a", encoding="utf-8")
+                    log_fh.write(f"\n{'='*55}\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] Starting {svc['name']}\n{'='*55}\n")
+                    log_fh.flush()
+
                     svc["process"] = subprocess.Popen(
                         svc["cmd"],
-                        stdout=subprocess.PIPE,
+                        stdout=log_fh,
                         stderr=subprocess.STDOUT,
                         cwd=str(_DIR),
                     )
