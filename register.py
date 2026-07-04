@@ -230,12 +230,34 @@ async def register_autoclaw(email, password, browser):
     async def handle_response(response):
         try:
             url = response.url
-            if "/userapi/v1/refresh" in url or "/userapi/overseasv1/google-oauth-login" in url:
-                body = await response.json()
-                if body.get("code") == 0 and body.get("data", {}).get("access_token"):
-                    tokens["access_token"] = body["data"]["access_token"]
-                    tokens["refresh_token"] = body["data"].get("refresh_token", "")
-                    print(f"\033[32m  [✓] Token intercepted!\033[0m")
+            # Intercept token responses from multiple possible endpoints
+            if any(ep in url for ep in [
+                "/userapi/v1/refresh",
+                "/userapi/overseasv1/google-oauth-login",
+                "/userapi/oauth/google/callback",
+                "/userapi/v1/oauth",
+                "/userapi/v1/google",
+            ]):
+                try:
+                    body = await response.json()
+                    if body.get("code") == 0 and body.get("data", {}).get("access_token"):
+                        tokens["access_token"] = body["data"]["access_token"]
+                        tokens["refresh_token"] = body["data"].get("refresh_token", "")
+                        print(f"\033[32m  [✓] Token intercepted!\033[0m")
+                except Exception:
+                    pass  # Not JSON or empty body — skip
+            # Broad catch: any response body containing access_token
+            if not tokens["access_token"] and response.status == 200:
+                try:
+                    body = await response.json()
+                    data = body.get("data", body)
+                    at = data.get("access_token") if isinstance(data, dict) else None
+                    if at and at.startswith("eyJ"):
+                        tokens["access_token"] = at
+                        tokens["refresh_token"] = data.get("refresh_token", "")
+                        print(f"\033[32m  [✓] Token intercepted (broad match)!\033[0m")
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -329,7 +351,28 @@ async def register_autoclaw(email, password, browser):
                 break
             await asyncio.sleep(1)
 
-        # Fallback: localStorage
+        # Fallback 1: Extract auth code from URL and exchange via API
+        if not tokens["access_token"]:
+            current_url = page.url
+            if "code=" in current_url:
+                print(f"  ├─ Found OAuth code in URL, exchanging...")
+                try:
+                    from urllib.parse import urlparse, parse_qs
+                    parsed = urlparse(current_url)
+                    params = parse_qs(parsed.query)
+                    auth_code = params.get("code", [None])[0]
+                    if auth_code:
+                        exchange_url = f"{BASE_URL}/userapi/oauth/google/callback"
+                        resp = requests.get(exchange_url, params={"code": auth_code}, timeout=15)
+                        data = resp.json()
+                        if data.get("code") == 0 and data.get("data", {}).get("access_token"):
+                            tokens["access_token"] = data["data"]["access_token"]
+                            tokens["refresh_token"] = data["data"].get("refresh_token", "")
+                            print(f"\033[32m  [✓] Token exchanged from auth code!\033[0m")
+                except Exception as e:
+                    print(f"  ├─ Code exchange failed: {e}")
+
+        # Fallback 2: localStorage
         if not tokens["access_token"]:
             print(f"  ├─ Trying localStorage...")
             await asyncio.sleep(3)
